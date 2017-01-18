@@ -20,6 +20,11 @@ android {
         versionName "3.2.0"
     }
 
+    lintOptions {
+        abortOnError false
+    }
+
+
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'

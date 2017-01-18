@@ -1,6 +1,7 @@
 package com.afilini.opencvtest.joypadserver;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
@@ -10,7 +11,7 @@ import java.net.Socket;
 
 public class ConnectionListener extends Thread {
     private final int port;
-    private DataOutputStream outToClient;
+    private ObjectOutputStream outToClient;
 
     public ConnectionListener(int port) {
         super("JoypadConnectionListener");
@@ -26,35 +27,51 @@ public class ConnectionListener extends Thread {
             e.printStackTrace();
         }
 
+        while (welcomeSocket == null) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         for (; ; ) {
             try {
-                assert welcomeSocket != null;
-
                 Socket connectionSocket = welcomeSocket.accept();
                 BufferedReader inFromClient =
                         new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
-                outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+                outToClient = new ObjectOutputStream(connectionSocket.getOutputStream());
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void sendImage(Mat mat) {
+    public void sendImage(Mat mat) throws IOException {
         if (outToClient == null) return;
 
         Bitmap img = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.RGB_565);
         Utils.matToBitmap(mat, img);
 
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        img.compress(Bitmap.CompressFormat.WEBP, 70, stream);
-        byte[] byteArray = stream.toByteArray();
+        int currentHeight = mat.rows();
+        int currentWidth = mat.cols();
 
-        try {
-            outToClient.writeBytes(String.format("%d\n", byteArray.length));
-            outToClient.write(byteArray);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        outToClient.writeInt(currentWidth);
+        outToClient.writeInt(currentHeight);
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        img.compress(Bitmap.CompressFormat.WEBP, 30, stream);
+        BitmapDataObject bitmapDataObject = new BitmapDataObject();
+        bitmapDataObject.imageByteArray = stream.toByteArray();
+
+        outToClient.writeObject(bitmapDataObject);
+    }
+
+    private Bitmap readImage(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        int sourceWidth = in.readInt();
+        int sourceHeight = in.readInt();
+
+        BitmapDataObject bitmapDataObject = (BitmapDataObject) in.readObject();
+        return BitmapFactory.decodeByteArray(bitmapDataObject.imageByteArray, 0, bitmapDataObject.imageByteArray.length);
     }
 }

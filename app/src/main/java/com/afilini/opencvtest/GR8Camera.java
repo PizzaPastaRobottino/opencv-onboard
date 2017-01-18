@@ -7,6 +7,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.*;
 import com.afilini.opencvtest.joypadserver.ConnectionListener;
@@ -18,10 +19,18 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+
 
 public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private EditText EV3_Input;
     private CheckBox save_IP;
+    private Button EV3_Connect;
+    private TextView info;
+    private TextView current_IP;
     private SharedPreferences preferences;
 
     private CameraBridgeViewBase mOpenCvCameraView;
@@ -38,9 +47,10 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         setContentView(R.layout.main);
 
         EV3_Input = (EditText) findViewById(R.id.EV3_Input);
-        Button EV3_Connect = (Button) findViewById(R.id.EV3_Connect); // TODO
+        EV3_Connect = (Button) findViewById(R.id.EV3_Connect); // TODO
         save_IP = (CheckBox) findViewById(R.id.EV3_Check);
-        TextView current_IP = (TextView) findViewById(R.id.current_IP);
+        current_IP = (TextView) findViewById(R.id.current_IP);
+        info = (TextView) findViewById(R.id.info);
         preferences = getPreferences(MODE_PRIVATE);
 
         WifiManager wifi = (WifiManager) getSystemService(WIFI_SERVICE);
@@ -69,8 +79,6 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        setContentView(R.layout.main);
-
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_view);
         //mOpenCvCameraView.setMaxFrameSize(1280, 720);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -89,16 +97,29 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         save_IP.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             SharedPreferences.Editor edit = preferences.edit();
-
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-
                 if (isChecked) {
                     edit.putString("IP", EV3_Input.getText().toString()).apply();
                     edit.putBoolean("isChecked", true).apply();
                 } else {
                     edit.remove("IP").apply();
                     edit.remove("isChecked").apply();
+                }
+            }
+        });
+
+        EV3_Connect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                info.setText("Connessione in corso.\n");
+                try {
+                    Socket EV3_Socket = new Socket(InetAddress.getByName(EV3_Input.getText().toString()), 9000);
+                    DataOutputStream sendData = new DataOutputStream((EV3_Socket.getOutputStream()));
+                    info.append("Connessione stabilita.");
+                } catch (Exception exc) {
+                    exc.printStackTrace();
+                    info.append("Connessione fallita");
                 }
             }
         });
@@ -164,7 +185,11 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         Core.flip(mRgba.t(), mRgbaT, 1);
         Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
 
-        connectionListener.sendImage(mRgbaT);
+        try {
+            connectionListener.sendImage(mRgbaT);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         return mRgbaT;
     }
