@@ -47,8 +47,8 @@ public class ConnectionListener extends Thread {
         }
     }
 
-    public void sendImage(Mat mat) throws IOException {
-        if (outToClient == null) return;
+    public Bitmap sendImage(Mat mat) throws IOException {
+        if (outToClient == null) return null;
 
         Bitmap img = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.RGB_565);
         Utils.matToBitmap(mat, img);
@@ -65,6 +65,7 @@ public class ConnectionListener extends Thread {
         bitmapDataObject.imageByteArray = stream.toByteArray();
 
         outToClient.writeObject(bitmapDataObject);
+        return img;
     }
 
     private Bitmap readImage(ObjectInputStream in) throws IOException, ClassNotFoundException {

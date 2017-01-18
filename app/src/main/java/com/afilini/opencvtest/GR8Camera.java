@@ -2,6 +2,7 @@ package com.afilini.opencvtest;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -186,7 +187,16 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
 
         try {
-            connectionListener.sendImage(mRgbaT);
+            final Bitmap image = connectionListener.sendImage(mRgbaT);
+            if (image != null) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ImageView imageView = (ImageView) findViewById(R.id.image_view);
+                        imageView.setImageBitmap(image);
+                    }
+                });
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
