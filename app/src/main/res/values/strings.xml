@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">OpenCVTest</string>
+    <color name="pervinca">#CCCCFF</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="whatever">#f4ffad</color>
+
 </resources>

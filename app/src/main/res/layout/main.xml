@@ -4,6 +4,7 @@
                 android:orientation="vertical"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
+                android:background="@color/black"
                 tools:context=".GR8Camera">
     <GridLayout
             android:layout_width="match_parent"
@@ -12,6 +13,7 @@
         <TextView
                 android:layout_width="match_parent"
                 android:layout_height="30dp"
+                android:textColor="@color/white"
                 android:text="EV3 Brick IP address:"
                 android:id="@+id/EV3_Text" android:textSize="23dp" android:layout_row="0" android:layout_column="0"/>
         <EditText
@@ -19,6 +21,7 @@
                 android:layout_height="wrap_content"
                 android:inputType="number|numberDecimal"
                 android:ems="10"
+                android:textColor="@color/white"
                 android:id="@+id/EV3_Input" android:digits="1,2,3,4,5,6,7,8,9,0,." android:singleLine="true"
                 android:layout_row="1" android:layout_column="0"/>
         <TableRow
@@ -34,6 +37,7 @@
             <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:textColor="@color/white"
                     android:text="Remember IP Address"
                     android:id="@+id/EV3_Check" android:checked="false"/>
         </TableRow>
@@ -44,6 +48,7 @@
 
             <TextView
                     android:layout_width="match_parent"
+                    android:textColor="@color/white"
                     android:layout_height="match_parent"
                     android:id="@+id/current_IP" android:layout_column="0"
             />
@@ -75,6 +80,7 @@
                 android:layout_height="150dp">
             <TextView
                     android:layout_width="match_parent"
+                    android:textColor="@color/white"
                     android:layout_height="match_parent" android:id="@+id/info"/>
         </TableRow>
     </GridLayout>

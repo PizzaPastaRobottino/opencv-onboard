@@ -10,6 +10,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.*;
+import com.afilini.opencvtest.ev3client.EV3ClientConnection;
 import com.afilini.opencvtest.joypadserver.ConnectionListener;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -19,10 +20,9 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.Socket;
+import java.net.UnknownHostException;
 
 
 public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -64,7 +64,7 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         if (ipString.equals("0.0.0.0")) {
             current_IP.setText("Currently not in a WiFi network.");
         } else {
-            current_IP.setText("Currently using address " + ipString + " on network " + networkName + ".");
+            current_IP.setText("Using address " + ipString + " on network " + networkName + ".");
         }
 
         String saved_IP = preferences.getString("IP", null);
@@ -112,14 +112,12 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         EV3_Connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                info.setText("Connessione in corso.\n");
+                info.setText("Trying to connect...\n");
                 try {
-                    Socket EV3_Socket = new Socket(InetAddress.getByName(EV3_Input.getText().toString()), 9000);
-                    DataOutputStream sendData = new DataOutputStream((EV3_Socket.getOutputStream()));
-                    info.append("Connessione stabilita.");
-                } catch (Exception exc) {
-                    exc.printStackTrace();
-                    info.append("Connessione fallita");
+                    Thread networkThread = new Thread(new EV3ClientConnection(InetAddress.getByName(EV3_Input.getText().toString()), 9000));
+                    networkThread.start();
+                } catch (UnknownHostException exc) {
+                    info.append("Unknown host\n");
                 }
             }
         });
