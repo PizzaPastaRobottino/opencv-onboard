@@ -49,7 +49,7 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         setContentView(R.layout.main);
 
         EV3_Input = (EditText) findViewById(R.id.EV3_Input);
-        EV3_Connect = (Button) findViewById(R.id.EV3_Connect); // TODO
+        EV3_Connect = (Button) findViewById(R.id.EV3_Connect);
         save_IP = (CheckBox) findViewById(R.id.EV3_Check);
         current_IP = (TextView) findViewById(R.id.current_IP);
         info = (TextView) findViewById(R.id.info);
@@ -82,6 +82,7 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_view);
+        mOpenCvCameraView.setMaxFrameSize(640, 480);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
     }
@@ -112,10 +113,17 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
                 try {
                     EV3Connection = new EV3ClientConnection(InetAddress.getByName(EV3_Input.getText().toString()), 9000);
                     EV3Connection.start();
-                    phoneConnection.readCommand(EV3Connection);
-                    info.append("Connection established with " + phoneConnection.getIpAddress() + ".");
+                    Runnable readCommand = new Runnable() {
+                        @Override
+                        public void run() {
+                            phoneConnection.readCommand(EV3Connection);
+                        }
+                    };
+                    Thread readCommandThread = new Thread(readCommand);
+                    readCommandThread.start();
+                    info.setText("Connection established with " + EV3Connection.getIpAddress() + ".\n");
                 } catch (UnknownHostException exc) {
-                    info.append("Unknown host.\n");
+                    info.setText("Unknown host.\n");
                 }
             }
         });
@@ -192,7 +200,7 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                info.append(text + "\n");
+                info.setText(text + "\n");
             }
         });
     }

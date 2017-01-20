@@ -55,4 +55,13 @@ public class EV3ClientConnection extends Thread {
                 break;
         }
     }
+
+    public String getIpAddress() {
+
+        if (this.IP != null) {
+            return this.IP.toString();
+        }
+
+        return "null";
+    }
 }

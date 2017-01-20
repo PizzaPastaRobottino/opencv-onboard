@@ -68,7 +68,7 @@ public class ConnectionListener extends Thread {
         outToClient.writeInt(currentHeight);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        img.compress(Bitmap.CompressFormat.WEBP, 1, stream);
+        img.compress(Bitmap.CompressFormat.WEBP, 30, stream);
         BitmapDataObject bitmapDataObject = new BitmapDataObject();
         bitmapDataObject.imageByteArray = stream.toByteArray();
 
@@ -80,11 +80,17 @@ public class ConnectionListener extends Thread {
         String command;
         while (true) {
             try {
+                if (inFromClient == null) {
+                    Thread.sleep(50);
+                    continue;
+                }
                 command = inFromClient.readLine();
-                cameraClass.editInfo("Command: " + command);
+                cameraClass.editInfo("Received command: " + command + " from phone, sending to EV3.");
                 EV3Connection.sendByte(command);
             } catch (IOException e) {
                 break;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
