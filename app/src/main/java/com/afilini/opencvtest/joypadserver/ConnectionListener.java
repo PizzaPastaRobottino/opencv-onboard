@@ -1,7 +1,9 @@
 package com.afilini.opencvtest.joypadserver;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.widget.TextView;
+import com.afilini.opencvtest.GR8Camera;
+import com.afilini.opencvtest.ev3client.EV3ClientConnection;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
@@ -12,15 +14,21 @@ import java.net.Socket;
 public class ConnectionListener extends Thread {
     private final int port;
     private ObjectOutputStream outToClient;
+    private BufferedReader inFromClient;
+    private ServerSocket welcomeSocket;
+    private GR8Camera cameraClass;
+    private TextView info;
 
-    public ConnectionListener(int port) {
+    public ConnectionListener(int port, GR8Camera cameraClass, TextView info) {
         super("JoypadConnectionListener");
         this.port = port;
+        this.cameraClass = cameraClass;
+        this.info = info;
     }
 
     @Override
     public void run() {
-        ServerSocket welcomeSocket = null;
+        welcomeSocket = null;
         try {
             welcomeSocket = new ServerSocket(port);
         } catch (IOException e) {
@@ -38,13 +46,13 @@ public class ConnectionListener extends Thread {
         for (; ; ) {
             try {
                 Socket connectionSocket = welcomeSocket.accept();
-                BufferedReader inFromClient =
-                        new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
+                inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
                 outToClient = new ObjectOutputStream(connectionSocket.getOutputStream());
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
     }
 
     public Bitmap sendImage(Mat mat) throws IOException {
@@ -60,7 +68,7 @@ public class ConnectionListener extends Thread {
         outToClient.writeInt(currentHeight);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        img.compress(Bitmap.CompressFormat.WEBP, 30, stream);
+        img.compress(Bitmap.CompressFormat.WEBP, 1, stream);
         BitmapDataObject bitmapDataObject = new BitmapDataObject();
         bitmapDataObject.imageByteArray = stream.toByteArray();
 
@@ -68,11 +76,20 @@ public class ConnectionListener extends Thread {
         return img;
     }
 
-    private Bitmap readImage(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        int sourceWidth = in.readInt();
-        int sourceHeight = in.readInt();
+    public void readCommand(EV3ClientConnection EV3Connection) {
+        String command;
+        while (true) {
+            try {
+                command = inFromClient.readLine();
+                cameraClass.editInfo("Command: " + command);
+                EV3Connection.sendByte(command);
+            } catch (IOException e) {
+                break;
+            }
+        }
+    }
 
-        BitmapDataObject bitmapDataObject = (BitmapDataObject) in.readObject();
-        return BitmapFactory.decodeByteArray(bitmapDataObject.imageByteArray, 0, bitmapDataObject.imageByteArray.length);
+    public String getIpAddress() {
+        return welcomeSocket.getInetAddress().toString();
     }
 }

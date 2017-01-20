@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">OpenCVTest</string>
+    <string name="app_name">GR8Camera</string>
     <color name="pervinca">#CCCCFF</color>
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>

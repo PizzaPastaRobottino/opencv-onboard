@@ -30,16 +30,17 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
     private EditText EV3_Input;
     private CheckBox save_IP;
     private Button EV3_Connect;
-    private TextView info;
+    public TextView info;
     private TextView current_IP;
     private SharedPreferences preferences;
 
     private CameraBridgeViewBase mOpenCvCameraView;
-    private final ConnectionListener connectionListener;
+    private final ConnectionListener phoneConnection;
+    private EV3ClientConnection EV3Connection;
 
     public GR8Camera() {
-        connectionListener = new ConnectionListener(8080);
-        connectionListener.start();
+        phoneConnection = new ConnectionListener(8080, this, this.info);
+        phoneConnection.start();
     }
 
     @Override
@@ -81,14 +82,8 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_view);
-        //mOpenCvCameraView.setMaxFrameSize(1280, 720);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
-
-        /* TODO:        Client per inviare comandi all'EV3,
-           TODO:        Client per inviare camera input al secondo telefono,
-           TODO:        GUI Improvement
-         */
     }
 
     @Override
@@ -115,10 +110,12 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
             public void onClick(View view) {
                 info.setText("Trying to connect...\n");
                 try {
-                    Thread networkThread = new Thread(new EV3ClientConnection(InetAddress.getByName(EV3_Input.getText().toString()), 9000));
-                    networkThread.start();
+                    EV3Connection = new EV3ClientConnection(InetAddress.getByName(EV3_Input.getText().toString()), 9000);
+                    EV3Connection.start();
+                    phoneConnection.readCommand(EV3Connection);
+                    info.append("Connection established with " + phoneConnection.getIpAddress() + ".");
                 } catch (UnknownHostException exc) {
-                    info.append("Unknown host\n");
+                    info.append("Unknown host.\n");
                 }
             }
         });
@@ -169,12 +166,10 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-
     }
 
     @Override
     public void onCameraViewStopped() {
-
     }
 
     @Override
@@ -185,20 +180,20 @@ public class GR8Camera extends Activity implements CameraBridgeViewBase.CvCamera
         Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
 
         try {
-            final Bitmap image = connectionListener.sendImage(mRgbaT);
-            if (image != null) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ImageView imageView = (ImageView) findViewById(R.id.image_view);
-                        imageView.setImageBitmap(image);
-                    }
-                });
-            }
+            final Bitmap image = phoneConnection.sendImage(mRgbaT);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return mRgbaT;
+    }
+
+    public void editInfo(final String text) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                info.append(text + "\n");
+            }
+        });
     }
 }
