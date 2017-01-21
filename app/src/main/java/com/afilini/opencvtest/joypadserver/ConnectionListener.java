@@ -68,7 +68,7 @@ public class ConnectionListener extends Thread {
         outToClient.writeInt(currentHeight);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        img.compress(Bitmap.CompressFormat.WEBP, 30, stream);
+        img.compress(Bitmap.CompressFormat.WEBP, 0, stream);
         BitmapDataObject bitmapDataObject = new BitmapDataObject();
         bitmapDataObject.imageByteArray = stream.toByteArray();
 
